@@ -9,6 +9,7 @@ review process.
 - Reviews pull requests using OpenAI's GPT-4 API.
 - Provides intelligent comments and suggestions for improving your code.
 - Filters out files that match specified exclude patterns.
+- Can be configured to run only when a specific label is present on the pull request.
 - Easy to set up and integrate into your GitHub workflow.
 
 ## Setup
@@ -29,6 +30,7 @@ on:
     types:
       - opened
       - synchronize
+      - labeled
 permissions: write-all
 jobs:
   review:
@@ -44,12 +46,13 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_API_MODEL: "gpt-4" # Optional: defaults to "gpt-4"
           exclude: "**/*.json, **/*.md" # Optional: exclude patterns separated by commas
+          REVIEW_LABEL: "ai-review" # Optional: only review when this label is present
 ```
 
 4. Replace `your-username` with your GitHub username or organization name where the AI Code Reviewer repository is
    located.
 
-5. Customize the `exclude` input if you want to ignore certain file patterns from being reviewed.
+5. Customize the `exclude` input if you want to ignore certain file patterns from being reviewed. You can also set `REVIEW_LABEL` to specify which label should trigger the review.
 
 6. Commit the changes to your repository, and AI Code Reviewer will start working on your future pull requests.
 
