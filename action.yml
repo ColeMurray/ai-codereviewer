@@ -11,15 +11,20 @@ inputs:
     description: "OpenAI API model."
     required: false
     default: "gpt-4o"
-  
+
+  REVIEW_LABEL:
+    description: "Only run if this label is present on the pull request"
+    required: false
+    default: ""
+
   LANGFUSE_SECRET_KEY:
     description: "Langfuse secret key"
     required: false
-  
+
   LANGFUSE_PUBLIC_KEY:
     description: "Langfuse public key"
     required: false
-  
+
   LANGFUSE_HOST:
     description: "Langfuse host"
     required: false

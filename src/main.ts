@@ -9,12 +9,14 @@ import { Langfuse } from "langfuse";
 // Constants for action names and input names
 const ACTION_OPENED = "opened";
 const ACTION_SYNCHRONIZE = "synchronize";
+const ACTION_LABELED = "labeled";
 const INPUT_GITHUB_TOKEN = "GITHUB_TOKEN";
 const INPUT_OPENAI_API_KEY = "OPENAI_API_KEY";
 const INPUT_OPENAI_API_MODEL = "OPENAI_API_MODEL";
 const INPUT_EXCLUDE = "exclude";
 const INPUT_LANGFUSE_SECRET_KEY = "LANGFUSE_SECRET_KEY";
 const INPUT_LANGFUSE_PUBLIC_KEY = "LANGFUSE_PUBLIC_KEY";
+const INPUT_REVIEW_LABEL = "REVIEW_LABEL";
 
 // TypeScript interfaces for GitHub event data
 interface Repository {
@@ -38,6 +40,7 @@ interface PRDetails {
   pull_number: number;
   title: string;
   description: string;
+  labels: string[];
 }
 
 interface AIReview {
@@ -96,12 +99,17 @@ async function getPRDetails(eventData: PullRequestEvent): Promise<PRDetails> {
       pull_number: eventData.number,
     });
 
+    const labels = prResponse.data.labels
+      ? prResponse.data.labels.map((l: { name?: string }) => l.name ?? "")
+      : [];
+
     return {
       owner: eventData.repository.owner.login,
       repo: eventData.repository.name,
       pull_number: eventData.number,
       title: prResponse.data.title ?? "",
       description: prResponse.data.body ?? "",
+      labels,
     };
   } catch (error) {
     throw new Error(`Failed to get PR details: ${(error as Error).message}`);
@@ -112,7 +120,7 @@ async function getPRDetails(eventData: PullRequestEvent): Promise<PRDetails> {
 async function getDiff(
   owner: string,
   repo: string,
-  pull_number: number
+  pull_number: number,
 ): Promise<string> {
   try {
     const response = await octokit.pulls.get({
@@ -133,7 +141,7 @@ async function getDiff(
 async function analyzeCode(
   parsedDiff: File[],
   prDetails: PRDetails,
-  trace: any // Adjust the type as per Langfuse's TypeScript definitions
+  trace: any, // Adjust the type as per Langfuse's TypeScript definitions
 ): Promise<Comment[]> {
   const comments: Comment[] = [];
 
@@ -173,14 +181,14 @@ async function analyzeCode(
             });
             return [];
           }
-        })
+        }),
       );
 
       // Flatten and add to comments
       fileComments.forEach((commentArray) => {
         comments.push(...commentArray);
       });
-    })
+    }),
   );
 
   return comments;
@@ -232,12 +240,12 @@ ${chunk.changes
 // Function to get AI response
 async function getAIResponse(
   prompt: string,
-  generation: any
+  generation: any,
 ): Promise<AIReview[] | null> {
   try {
     const response = await openai.chat.completions.create({
       ...OPENAI_QUERY_CONFIG,
-      response_format: {type: "json_object"},
+      response_format: { type: "json_object" },
       messages: [
         {
           role: "system",
@@ -278,7 +286,7 @@ async function createReviewComment(
   owner: string,
   repo: string,
   pull_number: number,
-  comments: Comment[]
+  comments: Comment[],
 ): Promise<void> {
   try {
     await octokit.pulls.createReview({
@@ -291,7 +299,7 @@ async function createReviewComment(
     console.log(`Created ${comments.length} review comment(s).`);
   } catch (error) {
     throw new Error(
-      `Failed to create review comments: ${(error as Error).message}`
+      `Failed to create review comments: ${(error as Error).message}`,
     );
   }
 }
@@ -312,14 +320,26 @@ async function main() {
       throw new Error("Event action is not defined.");
     }
 
-    // Only handle 'opened' and 'synchronize' actions
-    if (![ACTION_OPENED, ACTION_SYNCHRONIZE].includes(eventData.action)) {
+    // Only handle 'opened', 'synchronize' and 'labeled' actions
+    if (
+      ![ACTION_OPENED, ACTION_SYNCHRONIZE, ACTION_LABELED].includes(
+        eventData.action,
+      )
+    ) {
       console.log(`Unsupported event action: ${eventData.action}`);
       return;
     }
 
     // Get PR details
     const prDetails = await getPRDetails(eventData);
+
+    const requiredLabel = core.getInput(INPUT_REVIEW_LABEL);
+    if (requiredLabel && !prDetails.labels.includes(requiredLabel)) {
+      console.log(
+        `Required label '${requiredLabel}' not found on PR. Skipping analysis.`,
+      );
+      return;
+    }
 
     // Initialize trace
     trace = langfuse.trace({
@@ -331,16 +351,19 @@ async function main() {
 
     // Get diff based on action
     let diff: string;
-    if (eventData.action === ACTION_OPENED) {
+    if (
+      eventData.action === ACTION_OPENED ||
+      eventData.action === ACTION_LABELED
+    ) {
       diff = await getDiff(
         prDetails.owner,
         prDetails.repo,
-        prDetails.pull_number
+        prDetails.pull_number,
       );
     } else if (eventData.action === ACTION_SYNCHRONIZE) {
       if (!eventData.before || !eventData.after) {
         throw new Error(
-          "Both 'before' and 'after' SHAs are required for synchronize action."
+          "Both 'before' and 'after' SHAs are required for synchronize action.",
         );
       }
 
@@ -394,7 +417,7 @@ async function main() {
         prDetails.owner,
         prDetails.repo,
         prDetails.pull_number,
-        comments
+        comments,
       );
     } else {
       console.log("No comments to post.");
