@@ -432,19 +432,19 @@ is-plain-object@^5.0.0:
   resolved "https://registry.npmjs.org/is-plain-object/-/is-plain-object-5.0.0.tgz"
   integrity sha512-VRSzKkbMm5jMDoKLbltAkFQ5Qr7VDiTFGXxYFXXowVj387GeGNOCsOH6Msy00SGZ3Fp84b1Naa1psqgcCIEP5Q==
 
-langfuse-core@^3.31.0:
-  version "3.31.0"
-  resolved "https://registry.npmjs.org/langfuse-core/-/langfuse-core-3.31.0.tgz"
-  integrity sha512-aJ8dNp1Oh8e+XLJb5M+1lzluqi4oLBFxuSh56e8852WOifPs4Q3HPVblvf2YtyhpYqj0x+0cwhVP+iO2AAsh6Q==
+langfuse-core@^3.38.6:
+  version "3.38.6"
+  resolved "https://registry.yarnpkg.com/langfuse-core/-/langfuse-core-3.38.6.tgz#6ad5aefda9372dc52ac3f2b093e71940efafcd9d"
+  integrity sha512-EcZXa+DK9FJdi1I30+u19eKjuBJ04du6j2Nybk19KKCuraLczg/ppkTQcGvc4QOk//OAi3qUHrajUuV74RXsBQ==
   dependencies:
     mustache "^4.2.0"
 
-langfuse@^3.31.0:
-  version "3.31.0"
-  resolved "https://registry.npmjs.org/langfuse/-/langfuse-3.31.0.tgz"
-  integrity sha512-Qk2P4dNfiDGjbIjxBsurkRoyBUm5P4KdaeKdM65+IZosZ45TwOgv3AetmXbg+6bKIHbjkJZvOz+KFUmQ3I0AOg==
+langfuse@^3.38.6:
+  version "3.38.6"
+  resolved "https://registry.yarnpkg.com/langfuse/-/langfuse-3.38.6.tgz#67098d7ceace2aef0a36fc0416043e1dd741c5d8"
+  integrity sha512-mtwfsNGIYvObRh+NYNGlJQJDiBN+Wr3Hnr++wN25mxuOpSTdXX+JQqVCyAqGL5GD2TAXRZ7COsN42Vmp9krYmg==
   dependencies:
-    langfuse-core "^3.31.0"
+    langfuse-core "^3.38.6"
 
 make-error@^1.1.1:
   version "1.3.6"
